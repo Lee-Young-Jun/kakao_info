@@ -28,12 +28,13 @@ def talk_data_making(talk_address) :
     print('open')
 
     maked_data = list()
+    num = 0
 
     while True:
-        num = 0
+
         line = f.readline()
         if not line : break
-        num = num+1
+
 
         data_ing = talk_data_type
 
@@ -54,6 +55,8 @@ def talk_data_making(talk_address) :
             msg_spliter = list()
 
 
+
+
             # 년 월 일 오전or오후 ","  ":' 찾는다
 
             for i in range(len(line)) :
@@ -65,9 +68,9 @@ def talk_data_making(talk_address) :
                     if line[i] == '일':
                         d_n = i
                     if line[i] == '오':
-                        ap_m = i
+                        ap_m = i #ap_m은 보정이 끝나면 '오' 바로 앞의 ' '에서 끝이난다 주의
 
-                elif i>15 or i<=23 :
+                elif i>15 and i<=23 :
                     if line[i] == ',':
                         name_dot = i
 
@@ -75,20 +78,51 @@ def talk_data_making(talk_address) :
                 if line[i] == ':':   # 여러개의 ':'표시가 나올 수 있으므로 2번째 값을 가지도록 한다.
                     msg_spliter.append(i)
 
-            data_ing.talk_date = datetime.date(int(line[y_n-4:y_n]),int(line[m_n-2:m_n]),
+            #날짜 시간 정렬 ( 1일 -> 01일 )  뒤의 찾은 값들도 전부 더해준다
+            if m_n-y_n == 3 : # 월 앞에 0을 삽입시켜준다
+                line = line[:y_n+2]+'0'+line[y_n+2:]
+                m_n+=1
+                d_n+=1
+                ap_m+=1
+                name_dot+=1
+                msg_spliter[1]+=1
+
+            if d_n-m_n == 3 : # 일 앞에 0을 삽입시켜준다
+                line = line[:m_n+2]+'0'+line[m_n+2:]
+                d_n += 1
+                ap_m += 1
+                name_dot += 1
+                msg_spliter[1] += 1
+
+
+
+            if name_dot - ap_m == 7:
+                line = line[:ap_m+3]+'0'+line[ap_m+3:]
+                name_dot +=1
+                msg_spliter[1] += 1
+                print('0넣엇다')
+
+
+
+            data_ing.talk_date = datetime.date(int(line[y_n-4:y_n]),int(line[m_n-3:m_n]),
                                      int(line[d_n-3:d_n]))
+
 
             # 시간 데이터 추출
 
+
             if line[ap_m:ap_m+2] == '오후' :
-                if int(line[ap_m+3:ap_m+5]) > 12 : # 오후이면서 12시가 넘는 경우 시간 +12를 해서 24hr방식으로 표현
-                    data_ing.talk_time = datetime.time(int(line[ap_m+3:ap_m+5])+12,int(line[ap_m+6:ap_m+8]))
-            else :
-                data_ing.talk_time = datetime.time(int(line[ap_m+3:ap_m+5]),int(line[ap_m+6:ap_m+8]))
+                if int(line[ap_m+3:ap_m+5]) != 12 : # 오후이면서 12시가 넘는 경우 시간 +12를 해서 24hr방식으로 표현
+                    data_ing.talk_time = datetime.time(int(line[ap_m+3:ap_m+5])+12,int(line[ap_m+6:ap_m+8]),0)
+                else :
+                    data_ing.talk_time = datetime.time(int(line[ap_m+3:ap_m+5]),int(line[ap_m+6:ap_m+8]),0)
+
+            else:
+                data_ing.talk_time = datetime.time(int(line[ap_m + 3:ap_m + 5]), int(line[ap_m + 6:ap_m + 8]), 0)
 
 
     ##############             몇번째 대화인지
-
+            num = num + 1
             data_ing.num = num
 
 
@@ -109,11 +143,14 @@ def talk_data_making(talk_address) :
             if data_ing.msg == '동영상' :
                 data_ing.talk_type = 3
 
-            print(num)
+
             maked_data.append(data_ing)
-            print(maked_data)
+
 
     f.close()
 
+# 지금까지 txt파일에서 대화 데이터를 읽는 부분##
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
 
-talk_data_making("c:/Users/이영준/Desktop/kakao_info/young_min.txt")

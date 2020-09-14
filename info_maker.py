@@ -25,18 +25,19 @@ def talk_data_making(talk_address) :
 
 
     f = open(talk_address,'r',encoding='UTF8') #인코딩을 변환해주지않으면 오류가 생긴다
-    print('open')
 
-    maked_data = list()
+
+    making_data = list()
     num = 0
 
+
+
     while True:
+
 
         line = f.readline()
         if not line : break
 
-
-        data_ing = talk_data_type
 
         try :
             is_msg = line.index(',')
@@ -45,6 +46,17 @@ def talk_data_making(talk_address) :
 
         if  is_msg == None or is_msg >= 23:
             pass  # 정상대화가 아닌 날짜변경로그거나 저장한 날짜등을 표시하는 경우 카운팅하지않고 넘긴다
+
+
+        # 비정상 대화 필터링
+        elif not line[0:4].isdigit() :
+            pass
+
+        elif line[4] != '년' :
+            pass
+
+        elif line.count(':') == 1 :
+            pass
 
         else :
             y_n = None
@@ -77,7 +89,7 @@ def talk_data_making(talk_address) :
 
                 if line[i] == ':':   # 여러개의 ':'표시가 나올 수 있으므로 2번째 값을 가지도록 한다.
                     msg_spliter.append(i)
-
+            print(line)
             #날짜 시간 정렬 ( 1일 -> 01일 )  뒤의 찾은 값들도 전부 더해준다
             if m_n-y_n == 3 : # 월 앞에 0을 삽입시켜준다
                 line = line[:y_n+2]+'0'+line[y_n+2:]
@@ -100,11 +112,11 @@ def talk_data_making(talk_address) :
                 line = line[:ap_m+3]+'0'+line[ap_m+3:]
                 name_dot +=1
                 msg_spliter[1] += 1
-                print('0넣엇다')
 
 
 
-            data_ing.talk_date = datetime.date(int(line[y_n-4:y_n]),int(line[m_n-3:m_n]),
+
+            data_ing_talk_date = datetime.date(int(line[y_n-4:y_n]),int(line[m_n-3:m_n]),
                                      int(line[d_n-3:d_n]))
 
 
@@ -113,39 +125,42 @@ def talk_data_making(talk_address) :
 
             if line[ap_m:ap_m+2] == '오후' :
                 if int(line[ap_m+3:ap_m+5]) != 12 : # 오후이면서 12시가 넘는 경우 시간 +12를 해서 24hr방식으로 표현
-                    data_ing.talk_time = datetime.time(int(line[ap_m+3:ap_m+5])+12,int(line[ap_m+6:ap_m+8]),0)
+                    data_ing_talk_time = datetime.time(int(line[ap_m+3:ap_m+5])+12,int(line[ap_m+6:ap_m+8]),0)
                 else :
-                    data_ing.talk_time = datetime.time(int(line[ap_m+3:ap_m+5]),int(line[ap_m+6:ap_m+8]),0)
+                    data_ing_talk_time = datetime.time(int(line[ap_m+3:ap_m+5]),int(line[ap_m+6:ap_m+8]),0)
 
             else:
-                data_ing.talk_time = datetime.time(int(line[ap_m + 3:ap_m + 5]), int(line[ap_m + 6:ap_m + 8]), 0)
+                data_ing_talk_time = datetime.time(int(line[ap_m + 3:ap_m + 5]), int(line[ap_m + 6:ap_m + 8]), 0)
 
 
     ##############             몇번째 대화인지
             num = num + 1
-            data_ing.num = num
+            data_ing_num = num
 
 
     ##############            이름 설정
 
-            data_ing.name = line[name_dot+2:msg_spliter[1]]
+            data_ing_name = line[name_dot+2:msg_spliter[1]]
 
     ##############           메세지 처리
 
-            data_ing.talk_type = 0
+            data_ing_talk_type = 0
 
-            data_ing.msg = line[msg_spliter[1]+2:]
+            data_ing_msg = line[msg_spliter[1]+2:]
 
-            if data_ing.msg == '이모티콘' :
-                data_ing.talk_type = 1
-            if data_ing.msg == '사진' :
-                data_ing.talk_type = 2
-            if data_ing.msg == '동영상' :
-                data_ing.talk_type = 3
+            if data_ing_msg == '이모티콘' :
+                data_ing_talk_type = 1
+            if data_ing_msg == '사진' :
+                data_ing_talk_type = 2
+            if data_ing_msg == '동영상' :
+                data_ing_talk_type = 3
 
 
-            maked_data.append(data_ing)
+            making_data.append(talk_data_type(data_ing_num,data_ing_talk_date,data_ing_talk_time,data_ing_name,data_ing_talk_type,
+                                              data_ing_msg))
 
+
+    return making_data
 
     f.close()
 
@@ -153,4 +168,51 @@ def talk_data_making(talk_address) :
 #######################################################################################################################
 #######################################################################################################################
 #######################################################################################################################
+
+def talk_rate(talk_maked_list) : #누가 톡을 얼마나 했는지 return
+
+    name_dic = {} #딕셔너리 자료형
+
+
+    for i in range(len(talk_maked_list)) :
+
+        if not (talk_maked_list[i].name in name_dic): #딕셔너리 안에 이름이 없을 경우 이름을 추가해준다.
+            name_dic.setdefault(talk_maked_list[i].name)
+
+        num = name_dic.get(talk_maked_list[i].name)
+
+        if num == None :
+            num = 0
+
+        name_dic.update({talk_maked_list[i].name : num+1}) #이전 값을 get 하고 1을 더해준다.
+
+    counted_talk = list()
+
+    for key, value in name_dic.items() :
+        counted_talk.append([key, value])
+
+    return sorted(counted_talk, key = lambda x : -x[1])
+
+
+
+
+
+
+
+
+
+
+
+def talk_time(talk_maked_list) : #언제 톡을 많이하는지 시간대 분석 return
+    pass
+def talk_first_rate(talk_maked_list) : #선톡 비중에 대한 return
+    pass
+
+#### main
+if __name__ == "__main__" :
+
+    talk_maked_list = talk_data_making("C:/Users/이영준/Desktop/kakao_info/all_talk.txt")
+
+
+    print(talk_rate(talk_maked_list))
 

@@ -4,6 +4,10 @@
 
 from dataclasses import dataclass
 import datetime
+import pandas as pd
+import numpy as np
+import plotly.graph_objs as go
+from plotly.offline import plot
 
 @dataclass(frozen=True)
 class talk_data_type:
@@ -193,11 +197,29 @@ def talk_rate(talk_maked_list) : #누가 톡을 얼마나 했는지 return
 
     return sorted(counted_talk, key = lambda x : -x[1])
 
+def talk_rate_graph(talk_rate_list) :
+    name = []
+    num = []
+
+    for i in range(len(talk_rate_list)) :
+        name.append(talk_rate_list[i][0])
+        num.append(talk_rate_list[i][1])
+
+    #정수의 가장 높은 자릿수를 기준으로 반올림한다
+    max_rate = talk_rate_list[0][1]
+    max_range = max_rate - max_rate%(10^(len(str(max_rate))-1))
+
+    df = pd.DataFrame({'이름': name, '채팅횟수': num})
 
 
+    # 그래프 그리는 부분
 
-
-
+    trace = go.Bar(x=df['이름'], y=df['채팅횟수'])
+    layout = {}
+    layout.update({'xaxis':{'type': 'category'}})
+    layout.update({'yaxis':{'range' : [0,max_range]}})
+    fig = {'data' : [trace], 'layout' : layout}
+    plot(fig)
 
 
 
@@ -214,5 +236,7 @@ if __name__ == "__main__" :
     talk_maked_list = talk_data_making("C:/Users/이영준/Desktop/kakao_info/all_talk.txt")
 
 
-    print(talk_rate(talk_maked_list))
+    #print(talk_rate(talk_maked_list))
+
+    talk_rate_graph(talk_rate(talk_maked_list))
 

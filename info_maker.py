@@ -93,7 +93,7 @@ def talk_data_making(talk_address) :
 
                 if line[i] == ':':   # 여러개의 ':'표시가 나올 수 있으므로 2번째 값을 가지도록 한다.
                     msg_spliter.append(i)
-            print(line)
+
             #날짜 시간 정렬 ( 1일 -> 01일 )  뒤의 찾은 값들도 전부 더해준다
             if m_n-y_n == 3 : # 월 앞에 0을 삽입시켜준다
                 line = line[:y_n+2]+'0'+line[y_n+2:]
@@ -226,17 +226,71 @@ def talk_rate_graph(talk_rate_list) :
 
 
 def talk_time(talk_maked_list) : #언제 톡을 많이하는지 시간대 분석 return
-    pass
+    print('start')
+
+    all_name = []
+    name_list = []
+    name_for_time = []
+
+    for i in range(len(talk_maked_list)) :
+        print(i)
+
+        all_name.append(datetime.datetime.combine(talk_maked_list[i].talk_date,talk_maked_list[i].talk_time))
+        print(talk_maked_list[i].name)
+        print(datetime.datetime.combine(talk_maked_list[i].talk_date,talk_maked_list[i].talk_time))
+
+        if not talk_maked_list[i].name in all_name : #이름들을 중복을 막으며 리스트를 만든다
+            name_list.append(talk_maked_list[i].name)
+            name_for_time.append([])                #이중리스트를 제작시켜두고 시작
+
+        if talk_maked_list[i].name in all_name :    #추가된 이름안에서 이중리스트 내에 시간을 추가해준다.3
+            name_for_time[all_name.index(talk_maked_list[i].name)].append(datetime.datetime.combine(talk_maked_list[i].talk_date,
+                                                                                                    talk_maked_list[i].talk_time))
+
+    # 1day graph
+    one_day_counter = {} # '%Y,%m,%d,%H,%M'
+    one_day_num_counter = []
+
+
+    for i in range(len(all_name)) :
+
+        try :
+            if all_name[i].date.strftime('%Y,%m,%d,%H,%M') in one_day_counter :
+                one_day_counter[all_name[i].date.strftime('%Y,%m,%d,%H,%M')] += 1
+
+        except :
+            one_day_counter[all_name[i].date.strftime('%Y,%m,%d,%H,%M')] = 1
+
+
+    print(one_day_counter)
+
+
+
+
+
+
+    # 1hour graph
+
+    # 10min graph
+
+
+
+
+
+
 def talk_first_rate(talk_maked_list) : #선톡 비중에 대한 return
     pass
 
 #### main
 if __name__ == "__main__" :
 
-    talk_maked_list = talk_data_making("C:/Users/이영준/Desktop/kakao_info/all_talk.txt")
+    talk_maked_list = talk_data_making("C:/Users/이영준/Desktop/kakao_info/young_min.txt")
 
 
-    #print(talk_rate(talk_maked_list))
+    print(talk_rate(talk_maked_list))
 
-    talk_rate_graph(talk_rate(talk_maked_list))
+    #talk_rate_graph(talk_rate(talk_maked_list))
 
+    talk_time(talk_maked_list)
+
+    print('happy')

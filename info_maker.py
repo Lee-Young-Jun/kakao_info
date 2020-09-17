@@ -207,7 +207,7 @@ def talk_rate_graph(talk_rate_list) :
 
     #정수의 가장 높은 자릿수를 기준으로 반올림한다
     max_rate = talk_rate_list[0][1]
-    max_range = max_rate - max_rate%(10^(len(str(max_rate))-1))
+    max_range = (int(str(max_rate)[0]) + 1) * (10 ** (len(str(max_rate)) - 1))
 
     df = pd.DataFrame({'이름': name, '채팅횟수': num})
 
@@ -233,36 +233,85 @@ def talk_time(talk_maked_list) : #언제 톡을 많이하는지 시간대 분석
     name_for_time = []
 
     for i in range(len(talk_maked_list)) :
-        print(i)
+        #print(i)
 
         all_name.append(datetime.datetime.combine(talk_maked_list[i].talk_date,talk_maked_list[i].talk_time))
-        print(talk_maked_list[i].name)
-        print(datetime.datetime.combine(talk_maked_list[i].talk_date,talk_maked_list[i].talk_time))
+        #print(talk_maked_list[i].name)
+        #print(datetime.datetime.combine(talk_maked_list[i].talk_date,talk_maked_list[i].talk_time))
 
-        if not talk_maked_list[i].name in all_name : #이름들을 중복을 막으며 리스트를 만든다
+        if not talk_maked_list[i].name in name_list : #이름들을 중복을 막으며 리스트를 만든다
             name_list.append(talk_maked_list[i].name)
             name_for_time.append([])                #이중리스트를 제작시켜두고 시작
 
-        if talk_maked_list[i].name in all_name :    #추가된 이름안에서 이중리스트 내에 시간을 추가해준다.3
-            name_for_time[all_name.index(talk_maked_list[i].name)].append(datetime.datetime.combine(talk_maked_list[i].talk_date,
+        if talk_maked_list[i].name in name_list :    #추가된 이름안에서 이중리스트 내에 시간을 추가해준다.
+            name_for_time[name_list.index(talk_maked_list[i].name)].append(datetime.datetime.combine(talk_maked_list[i].talk_date,
                                                                                                     talk_maked_list[i].talk_time))
 
     # 1day graph
     one_day_counter = {} # '%Y,%m,%d,%H,%M'
-    one_day_num_counter = []
+    one_day_personal_counter = []
+    one_day_personal_values = []
 
 
     for i in range(len(all_name)) :
 
         try :
-            if all_name[i].date.strftime('%Y,%m,%d,%H,%M') in one_day_counter :
-                one_day_counter[all_name[i].date.strftime('%Y,%m,%d,%H,%M')] += 1
+            if all_name[i].strftime('%Y,%m,%d') in one_day_counter :
+                one_day_counter[all_name[i].strftime('%Y,%m,%d')] += 1
+
+            else :
+                one_day_counter[all_name[i].strftime('%Y,%m,%d')] = 1
 
         except :
-            one_day_counter[all_name[i].date.strftime('%Y,%m,%d,%H,%M')] = 1
+            print('error one day counter')
+            one_day_counter[all_name[i].strftime('%Y,%m,%d')] = 1
 
 
-    print(one_day_counter)
+    for i in range(len(name_list)) :
+
+        one_day_personal_counter.append({})
+        one_day_personal_values.append([])
+
+        for j in range(len(name_for_time[i])) :
+
+
+            try :
+                if name_for_time[i][j].strftime('%Y,%m,%d') in one_day_personal_counter[i] :
+                    one_day_personal_counter[i][name_for_time[i][j].strftime('%Y,%m,%d')] += 1
+
+                else :
+                    one_day_personal_counter[i][name_for_time[i][j].strftime('%Y,%m,%d')] = 1
+
+            except :
+                print('one day personal counter error occurrend')
+        #그래프 그리기 부분
+
+    one_day_keys = list(one_day_counter.keys())  #2~3일정도 톡을 한 날이 없다면 어떻게 되는가?
+    one_day_values = list(one_day_counter.values())
+
+    one_day_max_rate = max(one_day_values)
+    one_day_max_range = (int(str(one_day_max_rate)[0])+1)*(10**(len(str(one_day_max_rate))-1))
+
+
+
+    for i in range(len(name_list)) :
+        for j in range(len(one_day_keys)) :
+            if one_day_keys[j] in one_day_personal_counter[i] :
+                one_day_personal_values[i].append(one_day_personal_counter[i][one_day_keys[j]])
+
+            else :  #그 날짜에 한 말이 없다면
+                one_day_personal_values[i].append(0)
+
+
+    one_day_df = pd.DataFrame({'일' : one_day_keys, '채팅횟수' : one_day_values})
+
+    trace1 = go.Scatter(x=one_day_df['일'],y=one_day_df['채팅횟수'])
+    one_day_layout = {}
+    one_day_layout.update({'xaxis' : {'type' : 'category'}})
+    one_day_layout.update({'yaxis' : {'range' : [0,one_day_max_range]}})
+    fig = {'data' : [trace], 'layout' : one_day_layout}
+
+    plot(fig)
 
 
 
@@ -284,7 +333,7 @@ def talk_first_rate(talk_maked_list) : #선톡 비중에 대한 return
 #### main
 if __name__ == "__main__" :
 
-    talk_maked_list = talk_data_making("C:/Users/이영준/Desktop/kakao_info/young_min.txt")
+    talk_maked_list = talk_data_making("C:/Users/이영준/Desktop/kakao_info/all_talk.txt")
 
 
     print(talk_rate(talk_maked_list))
@@ -293,4 +342,3 @@ if __name__ == "__main__" :
 
     talk_time(talk_maked_list)
 
-    print('happy')

@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 from plotly.offline import plot
+import sys
 
 @dataclass(frozen=True)
 class talk_data_type:
@@ -305,11 +306,28 @@ def talk_time(talk_maked_list) : #언제 톡을 많이하는지 시간대 분석
 
     one_day_df = pd.DataFrame({'일' : one_day_keys, '채팅횟수' : one_day_values})
 
-    trace1 = go.Scatter(x=one_day_df['일'],y=one_day_df['채팅횟수'])
+    for i in range(len(name_list)) : #동적 변수생성으로 dataframe을 생성해낸다.
+        globals()['one_day_personal_df_{}'.format(i)] = pd.DataFrame({'일' : one_day_keys, '채팅횟수' : one_day_personal_values[i]})
+    #print(one_day_personal_df_1)
+    #print(type(one_day_personal_df_16))
+
+    trace_all = go.Scatter(x=one_day_df['일'],y=one_day_df['채팅횟수'],name='전체인원대화수')
+
+    for i in range(len(name_list)) : #17명일경우 16까지 생성됨
+        globals()['trace{}'.format(i)] = go.Scatter(x=getattr(sys.modules[__name__],'one_day_personal_df_{}'.format(i))['일'],
+                                                    y=getattr(sys.modules[__name__],'one_day_personal_df_{}'.format(i))['채팅횟수'],
+                                                    name=name_list[i])
+
     one_day_layout = {}
     one_day_layout.update({'xaxis' : {'type' : 'category'}})
     one_day_layout.update({'yaxis' : {'range' : [0,one_day_max_range]}})
-    fig = {'data' : [trace], 'layout' : one_day_layout}
+
+    datas = [trace_all]
+
+    fig = {'data' : datas, 'layout' : one_day_layout}
+
+    for i in range(len(name_list)) :
+        datas.append(getattr(sys.modules[__name__],'trace{}'.format(i)))
 
     plot(fig)
 
